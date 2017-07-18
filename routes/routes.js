@@ -6,7 +6,7 @@ var appRouter = function(app) {
 
     //process environment vars
     var DockerHostName = process.env.DockerHost || "DockerHost"
-    var DockerHostIPs = process.env.DockerHostIPS || ["127.0.0.1"]
+    var DockerHostIPs = process.env.DockerHostIPs || "127.0.0.1"
     var privatePassword = process.env.CAPassphrase || "cdscdockerswarm"    
     var CAPath = process.env.CAPath || 'C:\\DockerTLSCA'
     var CertPath = process.env.ALLUSERSPROFILE + '\\docker\\certs.d'
@@ -23,8 +23,10 @@ var appRouter = function(app) {
     var CACert = CAPath + '\\ca.pem';
     var ServerCert = CertPath + '\\cert.pem';
     var ServerKey = CertPath + '\\key.pem';
+    var ServerCA = CertPath + '\\ca.pem';
     var ClientKey = ClientCertPath + '\\key.pem';
     var ClientCert = ClientCertPath + '\\cert.pem';
+    
 
     //create CA cert for signing
     function CreateCACert (HostName, privatePassword, callback) {
@@ -259,6 +261,7 @@ var appRouter = function(app) {
                         console.log('Saving Host Cert as: ' + ServerCert)
                         fs.writeFileSync(ServerKey, data.key)
                         fs.writeFileSync(ServerCert, data.cert)                
+                        fs.writeFileSync(ServerCA, CApem)
                     }
                 });
             }
