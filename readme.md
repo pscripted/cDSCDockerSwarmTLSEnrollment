@@ -45,7 +45,7 @@ Invoke-RestMethod http://<containerhost>:3000/swarmnode -Method Post `
 -Body (@{servername=$env:computername;ips=@("192.168.0.20")} | Convertto-JSON) -ContentType "application/JSON"
 ```
 Response
-``
+```
 ServerKey  : -----BEGIN RSA PRIVATE KEY-----
              
              -----END RSA PRIVATE KEY-----
@@ -66,7 +66,7 @@ clientCert : -----BEGIN CERTIFICATE-----
                           
              -----END CERTIFICATE-----            
 
-``
+```
 ### Processing Certificates
  
  Use Install-cDSCSwarmTLSCert from the cDSCDockerSwarm Module
