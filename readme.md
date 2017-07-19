@@ -54,7 +54,7 @@ ServerCert : -----BEGIN CERTIFICATE-----
              
              -----END CERTIFICATE-----
              
-caPemPath     : -----BEGIN CERTIFICATE-----
+caCert     : -----BEGIN CERTIFICATE-----
              
              -----END CERTIFICATE-----
              

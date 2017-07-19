@@ -6,7 +6,7 @@ var appRouter = function(app) {
 
     //process environment vars
     var DockerHostName = process.env.DockerHost || "DockerHost"
-    var DockerHostIPs = process.env.DockerHostIPs || "127.0.0.1"
+    var DockerHostIPs = JSON.parse(process.env.DockerHostIPs || "[]")
     var privatePassword = process.env.CAPassphrase || "cdscdockerswarm"    
     var CAPath = process.env.CAPath || 'C:\\DockerTLSCA'
     var CertPath = process.env.ALLUSERSPROFILE + '\\docker\\certs.d'
@@ -255,7 +255,11 @@ var appRouter = function(app) {
             console.log('Checking for Host Cert')      
             if (!fs.existsSync(ServerCert)) {  
                 //IPS  
-                 var ips = [{type: 7, ip: '127.0.0.1'}]                 
+                 var ips = [{type: 7, ip: '127.0.0.1'}]
+                 for (var i = 0, len = DockerHostIPs; i < len; i++) {
+                    var ip = {type: 7, ip: req.body.ips[i]};
+                    ips.push(ip);
+                 }                 
                 //Get Certificate
                 CreateServerCert( DockerHostName, ips, function (err,data) {
                     if (err) {
