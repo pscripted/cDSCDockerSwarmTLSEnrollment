@@ -27,6 +27,7 @@ var appRouter = function(app) {
     var ServerCA = CertPath + '\\ca.pem';
     var ClientKey = ClientCertPath + '\\key.pem';
     var ClientCert = ClientCertPath + '\\cert.pem';
+    var ClientCA = ClientCertPath + '\\ca.pem';
     
 
     //create CA cert for signing
@@ -286,7 +287,8 @@ var appRouter = function(app) {
                     else {                                    
                         console.log('Saving Client Cert as: ' + ServerCert)
                         fs.writeFileSync(ClientKey, data.key)
-                        fs.writeFileSync(ClientCert, data.cert)                
+                        fs.writeFileSync(ClientCert, data.cert)
+                        fs.writeFileSync(ClientCA, caPem)                
                     }
                 });
             }

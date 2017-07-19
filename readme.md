@@ -12,7 +12,12 @@ if (!(Test-Path $env:SystemDrive\DockerTLSCA)) {
 }
 if (!(Test-Path $env:USERPROFILE\.docker)) {
     mkdir $env:USERPROFILE\.docker
-}            
+}
+if (!(Test-Path $env:ALLUSERSPROFILE\docker\certs.d)) {
+    Write-Verbose "Create Folder $("$env:ALLUSERSPROFILE\docker\certs.d")"
+    mkdir $env:ALLUSERSPROFILE\docker\certs.d
+} 
+             
 #Run TLS Enrollment Container
 
 #This will create local certs for the CA and running host, and allow other nodes to get their own signed certs from the CA            
