@@ -323,7 +323,7 @@ var appRouter = function(app) {
                 clientCert = data               
             }
         });;
-        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, caPemPath: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert, asn1: serverCert.asn1})
+        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, CACert: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert})
      });
 
     
