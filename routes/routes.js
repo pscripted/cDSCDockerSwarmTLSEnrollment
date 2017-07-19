@@ -14,13 +14,14 @@ var appRouter = function(app) {
     
     //declare vars
     
-    var CApem;
+    var caPem;
+    var caCert;
     var encPrivateKey;
     var CAprivateKey;
     
     //set paths
     var CAKey = CAPath + '\\ca-key.pem';
-    var CACert = CAPath + '\\ca.pem';
+    var caPemPath = CAPath + '\\ca.pem';
     var ServerCert = CertPath + '\\cert.pem';
     var ServerKey = CertPath + '\\key.pem';
     var ServerCA = CertPath + '\\ca.pem';
@@ -31,13 +32,13 @@ var appRouter = function(app) {
     //create CA cert for signing
     function CreateCACert (HostName, privatePassword, callback) {
         var keys = pki.rsa.generateKeyPair(2048);
-        var cert = pki.createCertificate();
-        cert.publicKey = keys.publicKey;
+        caCert = pki.createCertificate();
+        caCert.publicKey = keys.publicKey;
 
-        cert.serialNumber =  '032';
-        cert.validity.notBefore = new Date();
-        cert.validity.notAfter = new Date();
-        cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
+        caCert.serialNumber =  '032';
+        caCert.validity.notBefore = new Date();
+        caCert.validity.notAfter = new Date();
+        caCert.validity.notAfter.setFullYear(caCert.validity.notBefore.getFullYear() + 5);
         var attrs = [{
         name: 'commonName',
         value: HostName
@@ -57,9 +58,9 @@ var appRouter = function(app) {
         shortName: 'OU',
         value: 'DSC'
         }];
-        cert.setSubject(attrs);
-        cert.setIssuer(attrs);
-        cert.setExtensions([{
+        caCert.setSubject(attrs);
+        caCert.setIssuer(attrs);
+        caCert.setExtensions([{
         name: 'basicConstraints',
         cA: true
         }, {
@@ -82,20 +83,20 @@ var appRouter = function(app) {
         name: 'subjectKeyIdentifier'
         }]);
         // self-sign certificate
-        cert.sign(keys.privateKey);        
+        caCert.sign(keys.privateKey);
         encPrivateKey = pki.encryptRsaPrivateKey(keys.privateKey, privatePassword);
         // convert a Forge certificate to PEM
-        var pem = pki.certificateToPem(cert);
+        var pem = pki.certificateToPem(caCert);
         fs.writeFileSync(CAKey, encPrivateKey)
-        fs.writeFileSync(CACert, pem)
-        return callback(null, {key: keys.privateKey,cert: pem })
+        fs.writeFileSync(caPemPath, pem)
+        return callback(null, {'key': keys.privateKey,'cert': pem  })
     }
 
     //Get existing CA cert for use, or create one if does not exist
     function GetCAKey (callback) {
         if (!fs.existsSync(CAKey)) {
             console.log("Writing CA Cert")
-            console.log('Saving CA Key and Certs as: ' + CAKey + ' and ' + CACert)
+            console.log('Saving CA Key and Certs as: ' + CAKey + ' and ' + caPemPath)
 
             CreateCACert(DockerHostName, privatePassword, function (err,data) {
                  if (err) {
@@ -103,21 +104,23 @@ var appRouter = function(app) {
                 }
                 else {
                     console.log("Created CA Cert");
-                    CApem = data.cert;
+                    caPem = data.cert;
                     CAprivateKey = data.key;
-                    callback(null, {cert: CApem, key: CAprivateKey})         
+                    callback(null, {cert: caPem, key: CAprivateKey})         
                 }
             });            
         }
         else {
             console.log("CA Certificate Exists; importing")
-            console.log('Using CA Key and Certs from: ' + CAKey + ' and ' + CACert)
+            console.log('Using CA Key and Certs from: ' + CAKey + ' and ' + caPemPath)
 
             encPrivateKey = fs.readFileSync(CAKey, "utf8")                
             CAprivateKey = pki.decryptRsaPrivateKey(encPrivateKey, privatePassword);          
-            CApem  = fs.readFileSync(CACert, "utf8");               
+            caPem  = fs.readFileSync(caPemPath, "utf8");  
+            caCert =  pki.certificateFromPem(caPem);
+            
             console.log("Got CA Cert");
-            callback(null, {cert: CApem, key: CAprivateKey}) 
+            callback(null, {cert: caPem, key: CAprivateKey}) 
                     
         }
         
@@ -155,7 +158,7 @@ var appRouter = function(app) {
         value: 'DSC'
         }];
         cert.setSubject(attrs);
-        cert.setIssuer(attrs);
+        cert.setIssuer(caCert.subject.attributes);
         cert.setExtensions([{
         name: 'basicConstraints',
         cA: true
@@ -181,7 +184,7 @@ var appRouter = function(app) {
         // convert a Forge certificate to PEM
         var serverPem = pki.certificateToPem(cert);
         var serverKey =  pki.privateKeyToPem(keys.privateKey)
-        callback(null, {'key': serverKey, 'cert': serverPem, 'ca': CApem})
+        callback(null, {'key': serverKey, 'cert': serverPem, 'ca': caPem})
     }
 
     //Create Client Cert for cli access
@@ -215,7 +218,7 @@ var appRouter = function(app) {
         value: 'DSC'
         }];
         cert.setSubject(attrs);
-        cert.setIssuer(attrs);
+        cert.setIssuer(caCert.subject.attributes);
         cert.setExtensions([{
         name: 'basicConstraints',
         cA: true
@@ -262,7 +265,7 @@ var appRouter = function(app) {
                         console.log('Saving Host Cert as: ' + ServerCert)
                         fs.writeFileSync(ServerKey, data.key)
                         fs.writeFileSync(ServerCert, data.cert)                
-                        fs.writeFileSync(ServerCA, CApem)
+                        fs.writeFileSync(ServerCA, caPem)
                     }
                 });
             }
@@ -316,7 +319,7 @@ var appRouter = function(app) {
                 clientCert = data               
             }
         });;
-        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, CACert: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert, asn1: serverCert.asn1})
+        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, caPemPath: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert, asn1: serverCert.asn1})
      });
 
     
