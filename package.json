@@ -4,11 +4,12 @@
   "description": "Enrollment Server for user with cDSCDockerSwarm",
   "main": "app.js",
   "author": "Matt Sollie (PScripted)",
+  "url" : "https://github.com/pscripted/cDSCDockerSwarmTLSEnrollment/",
+  "email" : "matt@pscripted.com",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.17.2",
     "express": "^4.15.3",
-    "node-forge": "^0.7.1",
-    "selfsigned": "^1.9.1"
+    "node-forge": "^0.7.1"
   }
 }

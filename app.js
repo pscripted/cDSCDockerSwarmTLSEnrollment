@@ -1,3 +1,6 @@
+/**Pscripted. 2017
+ * https://github.com/pscripted/cDSCDockerSwarmTLSEnrollment/ * 
+ */
 var express = require("express");
 var bodyParser = require("body-parser");
 var forge = require("node-forge")
