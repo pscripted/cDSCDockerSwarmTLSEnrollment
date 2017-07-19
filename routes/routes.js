@@ -5,29 +5,29 @@ var appRouter = function(app) {
     var fs = require('fs');
 
     //process environment vars
-    var DockerHostName = process.env.DockerHost || "DockerHost"
-    var DockerHostIPs = JSON.parse(process.env.DockerHostIPs || "[]")
+    var dockerHostName = process.env.DockerHost || "DockerHost"
+    var dockerHostIPs = JSON.parse(process.env.DockerHostIPs || "[]")
     var privatePassword = process.env.CAPassphrase || "cdscdockerswarm"    
-    var CAPath = process.env.CAPath || 'C:\\DockerTLSCA'
-    var CertPath = process.env.ALLUSERSPROFILE + '\\docker\\certs.d'
-    var ClientCertPath  =  process.env.USERPROFILE + '\\.docker'
+    var caPath = process.env.CAPath || 'C:\\DockerTLSCA'
+    var certPath = process.env.ALLUSERSPROFILE + '\\docker\\certs.d'
+    var clientCertPath  =  process.env.USERPROFILE + '\\.docker'
     
     //declare vars
     
     var caPem;
     var caCert;
     var encPrivateKey;
-    var CAprivateKey;
+    var caPrivateKey;
     
     //set paths
-    var CAKey = CAPath + '\\ca-key.pem';
-    var caPemPath = CAPath + '\\ca.pem';
-    var ServerCert = CertPath + '\\cert.pem';
-    var ServerKey = CertPath + '\\key.pem';
-    var ServerCA = CertPath + '\\ca.pem';
-    var ClientKey = ClientCertPath + '\\key.pem';
-    var ClientCert = ClientCertPath + '\\cert.pem';
-    var ClientCA = ClientCertPath + '\\ca.pem';
+    var caKey = caPath + '\\ca-key.pem';
+    var caPemPath = caPath + '\\ca.pem';
+    var serverCert = certPath + '\\cert.pem';
+    var serverKey = certPath + '\\key.pem';
+    var serverCA = certPath + '\\ca.pem';
+    var clientKey = clientCertPath + '\\key.pem';
+    var clientCert = clientCertPath + '\\cert.pem';
+    var clientCA = clientCertPath + '\\ca.pem';
     
 
     //create CA cert for signing
@@ -88,47 +88,47 @@ var appRouter = function(app) {
         encPrivateKey = pki.encryptRsaPrivateKey(keys.privateKey, privatePassword);
         // convert a Forge certificate to PEM
         var pem = pki.certificateToPem(caCert);
-        fs.writeFileSync(CAKey, encPrivateKey)
+        fs.writeFileSync(caKey, encPrivateKey)
         fs.writeFileSync(caPemPath, pem)
         return callback(null, {'key': keys.privateKey,'cert': pem  })
     }
 
     //Get existing CA cert for use, or create one if does not exist
     function GetCAKey (callback) {
-        if (!fs.existsSync(CAKey)) {
+        if (!fs.existsSync(caKey)) {
             console.log("Writing CA Cert")
-            console.log('Saving CA Key and Certs as: ' + CAKey + ' and ' + caPemPath)
+            console.log('Saving CA Key and Certs as: ' + caKey + ' and ' + caPemPath)
 
-            CreateCACert(DockerHostName, privatePassword, function (err,data) {
+            CreateCACert(dockerHostName, privatePassword, function (err,data) {
                  if (err) {
                     console.log("ERROR" + err);
                 }
                 else {
                     console.log("Created CA Cert");
                     caPem = data.cert;
-                    CAprivateKey = data.key;
-                    callback(null, {cert: caPem, key: CAprivateKey})         
+                    caPrivateKey = data.key;
+                    callback(null, {cert: caPem, key: caPrivateKey})         
                 }
             });            
         }
         else {
             console.log("CA Certificate Exists; importing")
-            console.log('Using CA Key and Certs from: ' + CAKey + ' and ' + caPemPath)
+            console.log('Using CA Key and Certs from: ' + caKey + ' and ' + caPemPath)
 
-            encPrivateKey = fs.readFileSync(CAKey, "utf8")                
-            CAprivateKey = pki.decryptRsaPrivateKey(encPrivateKey, privatePassword);          
+            encPrivateKey = fs.readFileSync(caKey, "utf8")                
+            caPrivateKey = pki.decryptRsaPrivateKey(encPrivateKey, privatePassword);          
             caPem  = fs.readFileSync(caPemPath, "utf8");  
             caCert =  pki.certificateFromPem(caPem);
             
             console.log("Got CA Cert");
-            callback(null, {cert: caPem, key: CAprivateKey}) 
+            callback(null, {cert: caPem, key: caPrivateKey}) 
                     
         }
         
     }
     
     //create server cert for node access
-    function CreateServerCert (DockerHostName, ips ,callback) {
+    function CreateServerCert (dockerHostName, ips ,callback) {
         
         var keys = pki.rsa.generateKeyPair(2048);
         var cert = pki.createCertificate();
@@ -141,7 +141,7 @@ var appRouter = function(app) {
         cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
         var attrs = [{
         name: 'commonName',
-        value: DockerHostName
+        value: dockerHostName
         }, {
         name: 'countryName',
         value: 'Dockerstan'
@@ -181,15 +181,15 @@ var appRouter = function(app) {
         altNames: ips
         }]);
         // self-sign certificate
-        cert.sign(CAprivateKey);
+        cert.sign(caPrivateKey);
         // convert a Forge certificate to PEM
-        var serverPem = pki.certificateToPem(cert);
-        var serverKey =  pki.privateKeyToPem(keys.privateKey)
-        callback(null, {'key': serverKey, 'cert': serverPem, 'ca': caPem})
+        var newServerPem = pki.certificateToPem(cert);
+        var newServerKey =  pki.privateKeyToPem(keys.privateKey)
+        callback(null, {'key': newServerKey, 'cert': newServerPem, 'ca': caPem})
     }
 
     //Create Client Cert for cli access
-    function CreateClientCert (DockerHostName, callback) {
+    function CreateClientCert (dockerHostName, callback) {
         
         var keys = pki.rsa.generateKeyPair(2048);
         var cert = pki.createCertificate();
@@ -201,7 +201,7 @@ var appRouter = function(app) {
         cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
         var attrs = [{
         name: 'commonName',
-        value: DockerHostName
+        value: dockerHostName
         }, {
         name: 'countryName',
         value: 'Dockerstan'
@@ -238,11 +238,11 @@ var appRouter = function(app) {
         name: 'subjectKeyIdentifier'
         }]);
         // self-sign certificate
-        cert.sign(CAprivateKey);
+        cert.sign(caPrivateKey);
         // convert a Forge certificate to PEM        
-        var clientPem = pki.certificateToPem(cert);
-        var clientKey =  pki.privateKeyToPem(keys.privateKey)
-        callback(null, {key: clientKey, cert: clientPem })
+        var newClientPem = pki.certificateToPem(cert);
+        var newClientKey =  pki.privateKeyToPem(keys.privateKey)
+        callback(null, {key: newClientKey, cert: newClientPem })
     }
     //App Startup
     //Get CA Key and Create certs for running Docker Host
@@ -251,26 +251,26 @@ var appRouter = function(app) {
             console.log("ERROR");
         }
         else {              
-            CAprivateKey = data.key;
+            caPrivateKey = data.key;
             console.log("Got Private Key");            
             console.log('Checking for Host Cert')      
-            if (!fs.existsSync(ServerCert)) {  
+            if (!fs.existsSync(serverCert)) {  
                 //IPS  
                  var ips = []                 
-                 for (var i = 0, len = DockerHostIPs.length; i < len; i++) {
-                    var ip = {type: 7, ip: DockerHostIPs[i]};
+                 for (var i = 0, len = dockerHostIPs.length; i < len; i++) {
+                    var ip = {type: 7, ip: dockerHostIPs[i]};
                     ips.push(ip);
                  }                 
                 //Get Certificate
-                CreateServerCert( DockerHostName, ips, function (err,data) {
+                CreateServerCert( dockerHostName, ips, function (err,data) {
                     if (err) {
                             console.log("ERROR");
                     }
                     else {                                    
-                        console.log('Saving Host Cert as: ' + ServerCert)
-                        fs.writeFileSync(ServerKey, data.key)
-                        fs.writeFileSync(ServerCert, data.cert)                
-                        fs.writeFileSync(ServerCA, caPem)
+                        console.log('Saving Host Cert as: ' + serverCert)
+                        fs.writeFileSync(serverKey, data.key)
+                        fs.writeFileSync(serverCert, data.cert)                
+                        fs.writeFileSync(serverCA, caPem)
                     }
                 });
             }
@@ -279,16 +279,16 @@ var appRouter = function(app) {
 
             }  
             
-           if (!fs.existsSync(ClientCert)) {    
-                CreateClientCert( DockerHostName, function (err,data) {
+           if (!fs.existsSync(clientCert)) {    
+                CreateClientCert( dockerHostName, function (err,data) {
                     if (err) {
                             console.log("ERROR");
                     }
                     else {                                    
-                        console.log('Saving Client Cert as: ' + ServerCert)
-                        fs.writeFileSync(ClientKey, data.key)
-                        fs.writeFileSync(ClientCert, data.cert)
-                        fs.writeFileSync(ClientCA, caPem)                
+                        console.log('Saving Client Cert as: ' + serverCert)
+                        fs.writeFileSync(clientKey, data.key)
+                        fs.writeFileSync(clientCert, data.cert)
+                        fs.writeFileSync(clientCA, caPem)                
                     }
                 });
             }
@@ -306,15 +306,15 @@ var appRouter = function(app) {
             var ip = {type: 7, ip: req.body.ips[i]};
             ips.push(ip);
         }
-        var serverCert;
-        var clientCert;
+        var newServerCert;
+        var newClientCert;
         console.log('Sending Host Cert to ' + req.body.servername)
         CreateServerCert( req.body.servername, ips, function (err,data) {
             if (err) {
                     console.log("ERROR");
             }
             else {                                                    
-                serverCert = data               
+                newServerCert = data               
             }
         }),
          CreateClientCert( req.body.servername, function (err,data) {
@@ -322,10 +322,10 @@ var appRouter = function(app) {
                     console.log("ERROR");
             }
             else {                                                    
-                clientCert = data               
+                newClientCert = data               
             }
         });;
-        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, CACert: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert})
+        return res.send({serverKey: newServerCert.key, ServerCert: newServerCert.cert, CACert: newServerCert.ca ,clientKey: newClientCert.key, clientCert: newClientCert.cert})
      });
 
     
