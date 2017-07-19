@@ -34,7 +34,7 @@ var appRouter = function(app) {
         var cert = pki.createCertificate();
         cert.publicKey = keys.publicKey;
 
-        cert.serialNumber =  parseInt(Math.random() * (100000 - 10) + 10)
+        cert.serialNumber =  '032';
         cert.validity.notBefore = new Date();
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
@@ -129,8 +129,9 @@ var appRouter = function(app) {
         var keys = pki.rsa.generateKeyPair(2048);
         var cert = pki.createCertificate();
         cert.publicKey = keys.publicKey;
-
-        cert.serialNumber =  parseInt(Math.random() * (100000 - 10) + 10)
+        var serial =  (new Date).getTime(); 
+        console.log(serial);
+        cert.serialNumber = '01' //parseInt(Math.random() * (100000 - 10) + 10)
         cert.validity.notBefore = new Date();
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
@@ -190,7 +191,7 @@ var appRouter = function(app) {
         var cert = pki.createCertificate();
         cert.publicKey = keys.publicKey;
 
-        cert.serialNumber =  parseInt(Math.random() * (100000 - 10) + 10)
+        cert.serialNumber =  '02'
         cert.validity.notBefore = new Date();
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
@@ -234,7 +235,7 @@ var appRouter = function(app) {
         }]);
         // self-sign certificate
         cert.sign(CAprivateKey);
-        // convert a Forge certificate to PEM
+        // convert a Forge certificate to PEM        
         var clientPem = pki.certificateToPem(cert);
         var clientKey =  pki.privateKeyToPem(keys.privateKey)
         callback(null, {key: clientKey, cert: clientPem })
@@ -315,7 +316,7 @@ var appRouter = function(app) {
                 clientCert = data               
             }
         });;
-        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, CACert: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert})
+        return res.send({ServerKey: serverCert.key, ServerCert: serverCert.cert, CACert: serverCert.ca ,clientKey: clientCert.key, clientCert: clientCert.cert, asn1: serverCert.asn1})
      });
 
     
