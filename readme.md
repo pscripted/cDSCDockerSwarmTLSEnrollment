@@ -75,3 +75,8 @@ clientCert : -----BEGIN CERTIFICATE-----
 ### Processing Certificates
  
  Use Install-cDSCSwarmTLSCert from the cDSCDockerSwarm Module
+
+ To install client/user certificates on other machines:
+```
+ Install-cDSCSwarmTLSCert <SwarmIP>
+ ```
