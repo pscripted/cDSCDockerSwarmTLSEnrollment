@@ -255,9 +255,9 @@ var appRouter = function(app) {
             console.log('Checking for Host Cert')      
             if (!fs.existsSync(ServerCert)) {  
                 //IPS  
-                 var ips = [{type: 7, ip: '127.0.0.1'}]
-                 for (var i = 0, len = DockerHostIPs; i < len; i++) {
-                    var ip = {type: 7, ip: req.body.ips[i]};
+                 var ips = []                 
+                 for (var i = 0, len = DockerHostIPs.length; i < len; i++) {
+                    var ip = {type: 7, ip: DockerHostIPs[i]};
                     ips.push(ip);
                  }                 
                 //Get Certificate
